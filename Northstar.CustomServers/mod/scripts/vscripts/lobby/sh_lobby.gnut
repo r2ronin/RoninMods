@@ -268,18 +268,28 @@ array<string> function GetPrivateMatchMapsForMode( string modeName )
 
 	array<string> maps
 
-	// use the private match playlist for this if the gamemode is in it already
-	int privatePlaylistModeIndex = GetPrivateMatchModeIndex( modeName )
-	if ( privatePlaylistModeIndex < GetPlaylistGamemodesCount( PRIVATE_MATCH_PLAYLIST ) )
+	// map mods' playlists can add extra private_match entries for the same mode (e.g. only their own map),
+	// so collect maps from EVERY matching entry plus the mode's own playlist, deduplicated
+	int playlistModeCount = GetPlaylistGamemodesCount( PRIVATE_MATCH_PLAYLIST )
+	for ( int modeIndex = 0; modeIndex < playlistModeCount; modeIndex++ )
 	{
-		for ( int i = 0; i < GetPlaylistGamemodeByIndexMapsCount( PRIVATE_MATCH_PLAYLIST, privatePlaylistModeIndex ); i++ )
-			maps.append( GetPlaylistGamemodeByIndexMapByIndex( PRIVATE_MATCH_PLAYLIST, privatePlaylistModeIndex, i ) )
+		if ( GetPlaylistGamemodeByIndex( PRIVATE_MATCH_PLAYLIST, modeIndex ) != modeName )
+			continue
+
+		for ( int i = 0; i < GetPlaylistGamemodeByIndexMapsCount( PRIVATE_MATCH_PLAYLIST, modeIndex ); i++ )
+		{
+			string map = GetPlaylistGamemodeByIndexMapByIndex( PRIVATE_MATCH_PLAYLIST, modeIndex, i )
+			if ( !maps.contains( map ) )
+				maps.append( map )
+		}
 	}
-	else
+
+	int numMaps = GetPlaylistGamemodeByIndexMapsCount( modeName, 0 )
+	for ( int i = 0; i < numMaps; i++ )
 	{
-		int numMaps = GetPlaylistGamemodeByIndexMapsCount( modeName, 0 )
-		for ( int i = 0; i < numMaps; i++ )
-			maps.append( GetPlaylistGamemodeByIndexMapByIndex( modeName, 0, i ) )
+		string map = GetPlaylistGamemodeByIndexMapByIndex( modeName, 0, i )
+		if ( !maps.contains( map ) )
+			maps.append( map )
 	}
 
 	if ( NSIsVanilla() )
